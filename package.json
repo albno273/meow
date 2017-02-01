@@ -1,0 +1,23 @@
+{
+  "name": "meow",
+  "version": "1.0.0",
+  "description": "あなたの Twitter に社会性フィルタを。",
+  "main": "meow.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/albno273/meow.git"
+  },
+  "author": "Yuki Umeda / albno273",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/albno273/meow/issues"
+  },
+  "homepage": "https://github.com/albno273/meow#readme",
+  "dependencies": {
+    "confu": "0.0.3",
+    "twitter": "^1.7.0"
+  }
+}
