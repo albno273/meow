@@ -1,6 +1,6 @@
 {
   "name": "meow",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "あなたの Twitter に社会性フィルタを。",
   "main": "meow.js",
   "scripts": {
@@ -17,7 +17,9 @@
   },
   "homepage": "https://github.com/albno273/meow#readme",
   "dependencies": {
+    "async": "^2.1.4",
     "confu": "0.0.3",
+    "kuromoji": "^0.1.1",
     "twitter": "^1.7.0"
   }
 }
