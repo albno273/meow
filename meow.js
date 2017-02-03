@@ -93,7 +93,7 @@ client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
 
 				if (score < -0.6) {
 					console.log('Negative tweet detected!')
-					tweetMeow(id);
+					// tweetMeow(id);
 				}
 				callback(null, score);
 			}, 1000);
@@ -114,13 +114,8 @@ function stringSplitter(text, callback) {
 	var words_arr = [];
 	builder.build(function (err, tokenizer) {
 		if (!err) {
-			var filtered_tokens = tokenizer.tokenize(text).filter(
-				function (word, index) {
-					if (word.pos == '名詞' || word.pos == '動詞' ||
-						word.pos == '形容詞' || word.pos == '形容動詞')
-						return true;
-				});
-			filtered_tokens.forEach(function (value, index, array) {
+			var filtered_tokens = tokenizer.tokenize(text).forEach(
+				function (value, index, array) {
 				if (value.basic_form != '*')
 					words_arr.push(value.basic_form);
 			});
