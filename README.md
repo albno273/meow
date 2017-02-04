@@ -9,8 +9,8 @@ $ git clone git@github.com:albno273/meow.git
 ```
 ```sh
 $ mkdir config
-$ cd config
-$ touch key.json
+$ touch config/key.json
+$ vi config/key.json
 ```
 ```json
 {
@@ -23,8 +23,8 @@ $ touch key.json
 }
 ```
 ```sh
-npm install
-node app.js
+$ npm install
+$ node meow.js
 ```
 
 ## Require
@@ -44,8 +44,8 @@ node app.js
 
 ## Reference
 ### Recent Version
-1. 小林のぞみ，乾健太郎，松本裕治，立石健二，福島俊一. 意見抽出のための評価表現の収集. 自然言語処理，Vol.12, No.3, pp.203-222, 2005. / Nozomi Kobayashi, Kentaro Inui, Yuji Matsumoto, Kenji Tateishi. Collecting Evaluative Expressions for Opinion Extraction, Journal of Natural Language Processing 12(3), 203-222, 2005.
-1. 東山昌彦, 乾健太郎, 松本裕治, 述語の選択選好性に着目した名詞評価極性の獲得, 言語処理学会第14回年次大会論文集, pp.584-587, 2008. / Masahiko Higashiyama, Kentaro Inui, Yuji Matsumoto. Learning Sentiment of Nouns from Selectional Preferences of Verbs and Adjectives, Proceedings of the 14th Annual Meeting of the Association for Natural Language Processing, pp.584-587, 2008.
+1. Nozomi Kobayashi, Kentaro Inui, Yuji Matsumoto, Kenji Tateishi. Collecting Evaluative Expressions for Opinion Extraction, Journal of Natural Language Processing 12(3), 203-222, 2005.
+1. Masahiko Higashiyama, Kentaro Inui, Yuji Matsumoto. Learning Sentiment of Nouns from Selectional Preferences of Verbs and Adjectives, Proceedings of the 14th Annual Meeting of the Association for Natural Language Processing, pp.584-587, 2008.
 
 ### Previous Version
 1. Hiroya Takamura, Takashi Inui, Manabu Okumura,

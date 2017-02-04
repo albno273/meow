@@ -32,15 +32,18 @@ var count = 1;
  */
 console.log('Sociality filter activated.');
 client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
-	// client.stream('user', function (stream) {
+// client.stream('user', function (stream) {
 
 	stream.on('data', function (tweet) {
 
 		var text = tweet.text,
-			id = tweet.id_str;
-		console.log('tweet: ' + text);
+			id = tweet.id_str,
+			isRT = tweet.retweeted_status,
+			isReply = tweet.in_reply_to_user_id;
 
-		if (text.slice(0, 2) != 'RT') {
+		// リプライとRTを除外
+		if (isRT == null && isReply == null) {
+			console.log('tweet: ' + text);
 			// 同期処理(ちゃんとできてない)
 			async.waterfall([
 				morphologicalAnalysis,
@@ -93,7 +96,7 @@ client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
 				else
 					console.log('result: neutral');
 
-				if (score < -0.5) {
+				if (score < -0.3) {
 					console.log('Negative tweet detected!')
 					// tweetMeow(id);
 				}
@@ -136,7 +139,7 @@ function addingScore(words_arr, callback) {
 		verbPoint(value, function (err, point) {
 			if (!err) {
 				point_in_progress += point;
-				console.log('point_in_progress: ' + point_in_progress);
+				// console.log('point_in_progress: ' + point_in_progress);
 			}
 		});
 	});
@@ -151,7 +154,7 @@ function addingScore(words_arr, callback) {
  */
 function verbPoint(word, callback) {
 	var rs = fs.ReadStream('dic/parse_dic'),
-	// var rs = fs.ReadStream('dic/pn_ja.dic'),
+		// var rs = fs.ReadStream('dic/pn_ja.dic'),
 		rl = readline.createInterface({ 'input': rs, 'output': {} }),
 		point_of_word = 0;
 
@@ -169,8 +172,8 @@ function verbPoint(word, callback) {
 	});
 
 	rl.on('close', function () {
-		console.log('word: ' + word);
-		console.log('point_of_word:     ' + point_of_word);
+		// console.log('word: ' + word);
+		// console.log('point_of_word:     ' + point_of_word);
 		callback(null, point_of_word);
 	});
 
@@ -187,8 +190,7 @@ function tweetMeow(id) {
 				console.log('Delete succeeded.');
 				setTimeout(function () {
 					var tweet_body = 'にゃーん (通算' + count + '回目)';
-					client.post('statuses/update',
-						{ status: tweet_body },
+					client.post('statuses/update', { status: tweet_body },
 						function (err, rep) {
 							if (!err) {
 								console.log('Tweet succeeded. Meow!');
