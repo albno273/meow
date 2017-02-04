@@ -36,18 +36,18 @@ $ node meow.js
     - [async](https://www.npmjs.com/package/async)
 
 - dictionary
-    - Recent Version - [Japanese Sentiment Polarity Dictionary ](http://www.cl.ecei.tohoku.ac.jp/index.php?Open%20Resources%2FJapanese%20Sentiment%20Polarity%20Dictionary)
-    - Previous Version - [PN Table](http://www.lr.pi.titech.ac.jp/~takamura/pndic_ja.html)
+    - [Japanese Sentiment Polarity Dictionary ](http://www.cl.ecei.tohoku.ac.jp/index.php?Open%20Resources%2FJapanese%20Sentiment%20Polarity%20Dictionary)
+    - [PN Table](http://www.lr.pi.titech.ac.jp/~takamura/pndic_ja.html)
 
 ## License
 [MIT](https://github.com/tcnksm/tool/blob/master/LICENCE) - <b>!! EXCEPT DIC !!</b>
 
 ## Reference
-### Recent Version
+### JSPD
 1. Nozomi Kobayashi, Kentaro Inui, Yuji Matsumoto, Kenji Tateishi. Collecting Evaluative Expressions for Opinion Extraction, Journal of Natural Language Processing 12(3), 203-222, 2005.
 1. Masahiko Higashiyama, Kentaro Inui, Yuji Matsumoto. Learning Sentiment of Nouns from Selectional Preferences of Verbs and Adjectives, Proceedings of the 14th Annual Meeting of the Association for Natural Language Processing, pp.584-587, 2008.
 
-### Previous Version
+### PN Table
 1. Hiroya Takamura, Takashi Inui, Manabu Okumura,
 "Extracting Semantic Orientations of Words using Spin Model", In Proceedings of the 43rd Annual Meeting of the Association for Computational Linguistics (ACL2005) , pages 133--140, 2005. 
 

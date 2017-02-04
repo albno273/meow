@@ -32,7 +32,7 @@ var count = 1;
  */
 console.log('Sociality filter activated.');
 client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
-// client.stream('user', function (stream) {
+	// client.stream('user', function (stream) {
 
 	stream.on('data', function (tweet) {
 
@@ -62,25 +62,25 @@ client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
 		 */
 		function morphologicalAnalysis(callback) {
 			stringSplitter(text, function (err, words_arr) {
-				if (!err)
+				if (!err) {
 					callback(null, words_arr);
+				}
 			});
 		}
 
 		/** 
 		 * 日本語極性辞書を参照して各単語をスコアリング
+		 * 現在の評価モデル: 全単語の平均スコア
 		 */
 		function scoreingTweet(words_arr, callback) {
-			setTimeout(function () {
-				console.log(words_arr);
-				addingScore(words_arr, function (err, score) {
-					if (!err) {
-						setTimeout(function () {
-							callback(null, score / words_arr.length);
-						}, 1000);
-					}
-				});
-			}, 1000);
+			console.log(words_arr);
+			stringScore(words_arr, function (err, jspd, pnt) {
+				if (!err) {
+					console.log('JSPD:     ' + jspd / words_arr.length);
+					console.log('PN Table: ' + pnt / words_arr.length);
+					callback(null, jspd / words_arr.length);
+				}
+			});
 		}
 
 		/**
@@ -88,25 +88,23 @@ client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
 		 * 引っかかった時に該当ツイートを消して「にゃーん」ツイート
 		 */
 		function socialityFilter(score, callback) {
-			setTimeout(function () {
-				if (score < 0)
-					console.log('result: negative');
-				else if (score > 0)
-					console.log('result: positive');
-				else
-					console.log('result: neutral');
+			if (score < 0)
+				console.log('result: negative');
+			else if (score > 0)
+				console.log('result: positive');
+			else
+				console.log('result:  neutral');
 
-				if (score < -0.3) {
-					console.log('Negative tweet detected!')
-					// tweetMeow(id);
-				}
-				callback(null, score);
-			}, 1000);
+			if (score < -0.3) {
+				console.log('Very Negative tweet detected!')
+				// tweetMeow(id);
+			}
+			callback(null, score);
 		}
 	});
 
-	stream.on('error', function (error) {
-		console.log(error);
+	stream.on('error', function (err) {
+		console.log(err);
 	});
 
 });
@@ -124,37 +122,52 @@ function stringSplitter(text, callback) {
 					if (value.basic_form != '*')
 						words_arr.push(value.basic_form);
 				});
+			callback(null, words_arr);
 		}
 	});
-	callback(null, words_arr);
 }
 
 /**
  * 各単語のスコアを合算
  * @param words_arr 単語の入った array
  */
-function addingScore(words_arr, callback) {
-	var point_in_progress = 0;
+function stringScore(words_arr, callback) {
+	var point_ip_jspd = 0,
+		point_ip_pnt = 0,
+		flg_jspd = false,
+		flg_pnt = false;
+
 	words_arr.forEach(function (value, index, array) {
-		verbPoint(value, function (err, point) {
+		verbScoreFromJSPD(value, function (err, point) {
 			if (!err) {
-				point_in_progress += point;
-				// console.log('point_in_progress: ' + point_in_progress);
+				point_ip_jspd += point;
+				if (index == words_arr.length - 1)
+					flg_jspd = true;
+				cbPoint();
+			}
+		});
+		verbScoreFromPNTable(value, function (err, point) {
+			if (!err) {
+				point_ip_pnt += point;
+				if (index == words_arr.length - 1)
+					flg_pnt = true;
+				cbPoint();
 			}
 		});
 	});
-	setTimeout(function () {
-		callback(null, point_in_progress);
-	}, 2000);
+
+	function cbPoint() {
+		if (flg_jspd && flg_pnt)
+			callback(null, point_ip_jspd, point_ip_pnt);
+	}
 }
 
 /**
- * 単語のスコアを辞書から参照
+ * 単語のスコアを JSPD から参照
  * @param word 単語
  */
-function verbPoint(word, callback) {
+function verbScoreFromJSPD(word, callback) {
 	var rs = fs.ReadStream('dic/parse_dic'),
-		// var rs = fs.ReadStream('dic/pn_ja.dic'),
 		rl = readline.createInterface({ 'input': rs, 'output': {} }),
 		point_of_word = 0;
 
@@ -163,7 +176,6 @@ function verbPoint(word, callback) {
 		var line_arr = line.split(':');
 		if (word == line_arr[0]) {
 			point_of_word = parseFloat(line_arr[2]);
-			// point_of_word = parseFloat(line_arr[3]);
 		}
 	});
 
@@ -173,7 +185,36 @@ function verbPoint(word, callback) {
 
 	rl.on('close', function () {
 		// console.log('word: ' + word);
-		// console.log('point_of_word:     ' + point_of_word);
+		// console.log('verb point in JSPD: ' + point_of_word);
+		callback(null, point_of_word);
+	});
+
+}
+
+/**
+ * 単語のスコアを PN Table から参照
+ * @param word 単語
+ */
+function verbScoreFromPNTable(word, callback) {
+	var rs = fs.ReadStream('dic/pn_ja.dic'),
+		rl = readline.createInterface({ 'input': rs, 'output': {} }),
+		point_of_word = 0;
+
+	rl.on('line', function (line) {
+		// console.log(line);
+		var line_arr = line.split(':');
+		if (word == line_arr[0]) {
+			point_of_word = parseFloat(line_arr[3]);
+		}
+	});
+
+	rl.on('error', function (err) {
+		console.log(err);
+	});
+
+	rl.on('close', function () {
+		// console.log('word: ' + word);
+		// console.log('verb point in PN:   ' + point_of_word);
 		callback(null, point_of_word);
 	});
 
@@ -200,11 +241,11 @@ function tweetMeow(id) {
 								console.log(err);
 							}
 						});
-				}, 1000);
+				}, 2000);
 			} else {
 				console.log('Delete failed...');
 				console.log(err);
 			}
 		});
-	}, 1000);
+	}, 3000);
 }
