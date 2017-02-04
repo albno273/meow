@@ -44,7 +44,7 @@ client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
 		// リプライとRTを除外
 		if (isRT == null && isReply == null) {
 			console.log('tweet: ' + text);
-			// 同期処理(ちゃんとできてない)
+			// 同期処理
 			async.waterfall([
 				morphologicalAnalysis,
 				scoreingTweet,
@@ -53,7 +53,7 @@ client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
 				if (err)
 					throw err;
 				else
-					console.log('score: ' + score);
+					console.log('score:  ' + score);
 			});
 		}
 
@@ -62,9 +62,8 @@ client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
 		 */
 		function morphologicalAnalysis(callback) {
 			stringSplitter(text, function (err, words_arr) {
-				if (!err) {
+				if (!err)
 					callback(null, words_arr);
-				}
 			});
 		}
 
@@ -78,7 +77,8 @@ client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
 				if (!err) {
 					console.log('JSPD:     ' + jspd / words_arr.length);
 					console.log('PN Table: ' + pnt / words_arr.length);
-					callback(null, jspd / words_arr.length);
+					var score = ((jspd + pnt) / 2) / words_arr.length;
+					callback(null, score);
 				}
 			});
 		}
@@ -93,7 +93,7 @@ client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
 			else if (score > 0)
 				console.log('result: positive');
 			else
-				console.log('result:  neutral');
+				console.log('result: neutral');
 
 			if (score < -0.3) {
 				console.log('Very Negative tweet detected!')
@@ -115,6 +115,7 @@ client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
  */
 function stringSplitter(text, callback) {
 	var words_arr = [];
+
 	builder.build(function (err, tokenizer) {
 		if (!err) {
 			var filtered_tokens = tokenizer.tokenize(text).forEach(
@@ -132,34 +133,36 @@ function stringSplitter(text, callback) {
  * @param words_arr 単語の入った array
  */
 function stringScore(words_arr, callback) {
-	var point_ip_jspd = 0,
-		point_ip_pnt = 0,
-		flg_jspd = false,
-		flg_pnt = false;
+	var score_ip_jspd = 0,
+		score_ip_pnt = 0;
 
-	words_arr.forEach(function (value, index, array) {
-		verbScoreFromJSPD(value, function (err, point) {
-			if (!err) {
-				point_ip_jspd += point;
-				if (index == words_arr.length - 1)
-					flg_jspd = true;
-				cbPoint();
-			}
-		});
-		verbScoreFromPNTable(value, function (err, point) {
-			if (!err) {
-				point_ip_pnt += point;
-				if (index == words_arr.length - 1)
-					flg_pnt = true;
-				cbPoint();
-			}
-		});
+	async.parallel([
+		function (callback) {
+			words_arr.forEach(function (value, index, array) {
+				verbScoreFromPNTable(value, function (err, point) {
+					if (!err)
+						score_ip_pnt += point;
+					if (index == words_arr.length - 1)
+						callback(null, score_ip_pnt);
+				});
+			});
+		},
+		function (callback) {
+			words_arr.forEach(function (value, index, array) {
+				verbScoreFromJSPD(value, function (err, point) {
+					if (!err)
+						score_ip_jspd += point;
+					if (index == words_arr.length - 1)
+						callback(null, score_ip_jspd);
+				});
+			});
+		}
+	], function (err, scores) {
+		if (err)
+			throw err;
+		else
+			callback(null, scores[0], scores[1]);
 	});
-
-	function cbPoint() {
-		if (flg_jspd && flg_pnt)
-			callback(null, point_ip_jspd, point_ip_pnt);
-	}
 }
 
 /**
@@ -172,7 +175,6 @@ function verbScoreFromJSPD(word, callback) {
 		point_of_word = 0;
 
 	rl.on('line', function (line) {
-		// console.log(line);
 		var line_arr = line.split(':');
 		if (word == line_arr[0]) {
 			point_of_word = parseFloat(line_arr[2]);
@@ -201,7 +203,6 @@ function verbScoreFromPNTable(word, callback) {
 		point_of_word = 0;
 
 	rl.on('line', function (line) {
-		// console.log(line);
 		var line_arr = line.split(':');
 		if (word == line_arr[0]) {
 			point_of_word = parseFloat(line_arr[3]);
