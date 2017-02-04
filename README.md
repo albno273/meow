@@ -36,13 +36,19 @@ node app.js
     - [async](https://www.npmjs.com/package/async)
 
 - dictionary
-    - [PN Table](http://www.lr.pi.titech.ac.jp/~takamura/pndic_ja.html)
+    - Recent Version - [Japanese Sentiment Polarity Dictionary ](http://www.cl.ecei.tohoku.ac.jp/index.php?Open%20Resources%2FJapanese%20Sentiment%20Polarity%20Dictionary)
+    - Previous Version - [PN Table](http://www.lr.pi.titech.ac.jp/~takamura/pndic_ja.html)
 
 ## License
 [MIT](https://github.com/tcnksm/tool/blob/master/LICENCE) - <b>!! EXCEPT DIC !!</b>
 
 ## Reference
-Hiroya Takamura, Takashi Inui, Manabu Okumura,
+### Recent Version
+1. 小林のぞみ，乾健太郎，松本裕治，立石健二，福島俊一. 意見抽出のための評価表現の収集. 自然言語処理，Vol.12, No.3, pp.203-222, 2005. / Nozomi Kobayashi, Kentaro Inui, Yuji Matsumoto, Kenji Tateishi. Collecting Evaluative Expressions for Opinion Extraction, Journal of Natural Language Processing 12(3), 203-222, 2005.
+1. 東山昌彦, 乾健太郎, 松本裕治, 述語の選択選好性に着目した名詞評価極性の獲得, 言語処理学会第14回年次大会論文集, pp.584-587, 2008. / Masahiko Higashiyama, Kentaro Inui, Yuji Matsumoto. Learning Sentiment of Nouns from Selectional Preferences of Verbs and Adjectives, Proceedings of the 14th Annual Meeting of the Association for Natural Language Processing, pp.584-587, 2008.
+
+### Previous Version
+1. Hiroya Takamura, Takashi Inui, Manabu Okumura,
 "Extracting Semantic Orientations of Words using Spin Model", In Proceedings of the 43rd Annual Meeting of the Association for Computational Linguistics (ACL2005) , pages 133--140, 2005. 
 
 ## Contact

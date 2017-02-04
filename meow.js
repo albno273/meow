@@ -40,17 +40,19 @@ client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
 			id = tweet.id_str;
 		console.log('tweet: ' + text);
 
-		// 同期処理(ちゃんとできてない)
-		async.waterfall([
-			morphologicalAnalysis,
-			scoreingTweet,
-			socialityFilter
-		], function (err, score) {
-			if (err)
-				throw err;
-			else
-				console.log('score: ' + score);
-		});
+		if (text.slice(0, 2) != 'RT') {
+			// 同期処理(ちゃんとできてない)
+			async.waterfall([
+				morphologicalAnalysis,
+				scoreingTweet,
+				socialityFilter
+			], function (err, score) {
+				if (err)
+					throw err;
+				else
+					console.log('score: ' + score);
+			});
+		}
 
 		/** 
 		 * 形態素解析して名詞と用言の基本形を抽出
@@ -91,7 +93,7 @@ client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
 				else
 					console.log('result: neutral');
 
-				if (score < -0.6) {
+				if (score < -0.5) {
 					console.log('Negative tweet detected!')
 					// tweetMeow(id);
 				}
@@ -116,9 +118,9 @@ function stringSplitter(text, callback) {
 		if (!err) {
 			var filtered_tokens = tokenizer.tokenize(text).forEach(
 				function (value, index, array) {
-				if (value.basic_form != '*')
-					words_arr.push(value.basic_form);
-			});
+					if (value.basic_form != '*')
+						words_arr.push(value.basic_form);
+				});
 		}
 	});
 	callback(null, words_arr);
@@ -148,7 +150,8 @@ function addingScore(words_arr, callback) {
  * @param word 単語
  */
 function verbPoint(word, callback) {
-	var rs = fs.ReadStream('dic/pn_ja.dic'),
+	var rs = fs.ReadStream('dic/parse_dic'),
+	// var rs = fs.ReadStream('dic/pn_ja.dic'),
 		rl = readline.createInterface({ 'input': rs, 'output': {} }),
 		point_of_word = 0;
 
@@ -156,8 +159,8 @@ function verbPoint(word, callback) {
 		// console.log(line);
 		var line_arr = line.split(':');
 		if (word == line_arr[0]) {
-			point_of_word = parseFloat(line_arr[3]);
-			// console.log(line_arr[0] + ' ' + line_arr[1] + ' ' + line_arr[3]);
+			point_of_word = parseFloat(line_arr[2]);
+			// point_of_word = parseFloat(line_arr[3]);
 		}
 	});
 
