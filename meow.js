@@ -31,11 +31,10 @@ var count = 1;
  * 'follow: ---' には自分のユーザIDを入力
  */
 console.log('Sociality filter activated.');
+// client.stream('user', function (stream) {
 client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
-	// client.stream('user', function (stream) {
 
 	stream.on('data', function (tweet) {
-
 		var text = tweet.text,
 			id = tweet.id_str,
 			isRT = tweet.retweeted_status,
@@ -43,17 +42,15 @@ client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
 
 		// リプライとRTを除外
 		if (isRT == null && isReply == null) {
-			console.log('tweet: ' + text);
+			console.log('tweet:    ' + text);
 			// 同期処理
 			async.waterfall([
 				morphologicalAnalysis,
 				scoreingTweet,
 				socialityFilter
-			], function (err, score) {
+			], function (err) {
 				if (err)
 					throw err;
-				else
-					console.log('score:  ' + score);
 			});
 		}
 
@@ -62,8 +59,10 @@ client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
 		 */
 		function morphologicalAnalysis(callback) {
 			stringSplitter(text, function (err, words_arr) {
-				if (!err)
+				if (!err) {
+					console.log('elements: ' + words_arr);
 					callback(null, words_arr);
+				}
 			});
 		}
 
@@ -72,15 +71,18 @@ client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
 		 * 現在の評価モデル: 全単語の平均スコア
 		 */
 		function scoreingTweet(words_arr, callback) {
-			console.log(words_arr);
-			stringScore(words_arr, function (err, jspd, pnt) {
-				if (!err) {
-					console.log('JSPD:     ' + jspd / words_arr.length);
-					console.log('PN Table: ' + pnt / words_arr.length);
-					var score = ((jspd + pnt) / 2) / words_arr.length;
-					callback(null, score);
-				}
-			});
+			if (words_arr.length == 0)
+				callback(null, 0);
+			else {
+				stringScore(words_arr, function (err, jspd, pnt) {
+					if (!err) {
+						console.log('JSPD:     ' + jspd / words_arr.length);
+						console.log('PN Table: ' + pnt / words_arr.length);
+						var score = ((jspd + pnt) / 2) / words_arr.length;
+						callback(null, score);
+					}
+				});
+			}
 		}
 
 		/**
@@ -88,6 +90,7 @@ client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
 		 * 引っかかった時に該当ツイートを消して「にゃーん」ツイート
 		 */
 		function socialityFilter(score, callback) {
+			console.log('score: ' + score);
 			if (score < 0)
 				console.log('result: negative');
 			else if (score > 0)
@@ -99,7 +102,7 @@ client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
 				console.log('Very Negative tweet detected!')
 				// tweetMeow(id);
 			}
-			callback(null, score);
+			callback(null);
 		}
 	});
 
@@ -115,7 +118,6 @@ client.stream('statuses/filter', { follow: 3021775021 }, function (stream) {
  */
 function stringSplitter(text, callback) {
 	var words_arr = [];
-
 	builder.build(function (err, tokenizer) {
 		if (!err) {
 			var filtered_tokens = tokenizer.tokenize(text).forEach(
@@ -139,7 +141,7 @@ function stringScore(words_arr, callback) {
 	async.parallel([
 		function (callback) {
 			words_arr.forEach(function (value, index, array) {
-				verbScoreFromPNTable(value, function (err, point) {
+				verbScoreFromDic(value, 'jspd', function (err, point) {
 					if (!err)
 						score_ip_pnt += point;
 					if (index == words_arr.length - 1)
@@ -149,7 +151,7 @@ function stringScore(words_arr, callback) {
 		},
 		function (callback) {
 			words_arr.forEach(function (value, index, array) {
-				verbScoreFromJSPD(value, function (err, point) {
+				verbScoreFromDic(value, 'pnt', function (err, point) {
 					if (!err)
 						score_ip_jspd += point;
 					if (index == words_arr.length - 1)
@@ -166,18 +168,29 @@ function stringScore(words_arr, callback) {
 }
 
 /**
- * 単語のスコアを JSPD から参照
+ * 単語のスコアを辞書から参照
  * @param word 単語
+ * @param dic 辞書 (jspd or pnt)
  */
-function verbScoreFromJSPD(word, callback) {
-	var rs = fs.ReadStream('dic/parse_dic'),
-		rl = readline.createInterface({ 'input': rs, 'output': {} }),
+function verbScoreFromDic(word, dic, callback) {
+	if (dic == 'jspd')
+		var rs = fs.ReadStream('dic/parse_dic');
+	else if (dic == 'pnt')
+		var rs = fs.ReadStream('dic/pn_ja.dic');
+	else
+		callback('Parameter Error! input: ' + dic, 0);
+	var rl = readline.createInterface({ 'input': rs, 'output': {} }),
 		point_of_word = 0;
 
 	rl.on('line', function (line) {
 		var line_arr = line.split(':');
 		if (word == line_arr[0]) {
-			point_of_word = parseFloat(line_arr[2]);
+			if (dic == 'jspd')
+				point_of_word = parseFloat(line_arr[2]);
+			else if (dic == 'pnt')
+				point_of_word = parseFloat(line_arr[3]);
+			else
+				console.log('???');
 		}
 	});
 
@@ -187,35 +200,7 @@ function verbScoreFromJSPD(word, callback) {
 
 	rl.on('close', function () {
 		// console.log('word: ' + word);
-		// console.log('verb point in JSPD: ' + point_of_word);
-		callback(null, point_of_word);
-	});
-
-}
-
-/**
- * 単語のスコアを PN Table から参照
- * @param word 単語
- */
-function verbScoreFromPNTable(word, callback) {
-	var rs = fs.ReadStream('dic/pn_ja.dic'),
-		rl = readline.createInterface({ 'input': rs, 'output': {} }),
-		point_of_word = 0;
-
-	rl.on('line', function (line) {
-		var line_arr = line.split(':');
-		if (word == line_arr[0]) {
-			point_of_word = parseFloat(line_arr[3]);
-		}
-	});
-
-	rl.on('error', function (err) {
-		console.log(err);
-	});
-
-	rl.on('close', function () {
-		// console.log('word: ' + word);
-		// console.log('verb point in PN:   ' + point_of_word);
+		// console.log('verb point in ' + dic + ': ' + point_of_word);
 		callback(null, point_of_word);
 	});
 
